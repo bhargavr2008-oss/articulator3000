@@ -2,9 +2,13 @@ import { z } from "zod";
 import { audienceCopySchema } from "@/lib/artifacts/schema";
 import { ideaModelSchema } from "@/lib/synthesis/schema";
 
+export const generatedImageDataUrlSchema = z
+  .string()
+  .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/);
+
 export const visualAssetSchema = z.object({
   status: z.enum(["pending", "ready", "error"]),
-  imageDataUrl: z.string().nullable(),
+  imageDataUrl: generatedImageDataUrlSchema.nullable(),
   error: z.string().nullable(),
 });
 

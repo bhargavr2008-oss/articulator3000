@@ -68,8 +68,7 @@ export default function AirDraw({
   const smoothedRef = useRef<Point | null>(null);
   const colorIdxRef = useRef(0);
 
-  // Tunables (live-adjustable so we can find what *feels* good — the Step 0 exit criteria).
-  // Defaults below are the values that felt good during the Step 0 hand-test.
+  // Tunables are live-adjustable so the demo team can calibrate to lighting and camera quality.
   const downThreshRef = useRef(0.21); // pinchRatio below this => pen down
   const upThreshRef = useRef(0.33); // pinchRatio above this => pen up (hysteresis)
   const smoothingRef = useRef(0.15); // EMA alpha; higher = snappier, lower = smoother
@@ -315,7 +314,9 @@ export default function AirDraw({
   }, [onStartRequested, start]);
 
   useEffect(() => {
-    if (autoStart && status === "idle") void start();
+    if (!autoStart || status !== "idle") return;
+    const id = window.setTimeout(() => void start(), 0);
+    return () => window.clearTimeout(id);
   }, [autoStart, start, status]);
 
   useEffect(() => {

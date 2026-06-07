@@ -16,9 +16,8 @@ const RESULT_FIELDS = [
 ] as const;
 
 const AUDIENCES: { id: Audience; label: string }[] = [
-  { id: "teammate", label: "Teammate" },
-  { id: "investor", label: "Investor" },
-  { id: "coding-agent", label: "Coding agent" },
+  { id: "teammate", label: "Teammates" },
+  { id: "technical-engineering", label: "Technical engineering" },
 ];
 
 function VisualPanel({
@@ -35,7 +34,7 @@ function VisualPanel({
       {asset.status === "ready" && asset.imageDataUrl ? (
         <img
           src={asset.imageDataUrl}
-          alt=""
+          alt={title}
           className="aspect-[3/2] w-full object-cover"
         />
       ) : asset.status === "error" ? (
@@ -61,6 +60,20 @@ function VisualPanel({
   );
 }
 
+function imageFiles(assets: VisualAsset[]) {
+  return assets.flatMap((asset, index) => {
+    if (!asset.imageDataUrl) return [];
+    const [header, b64] = asset.imageDataUrl.split(",");
+    const mime = header.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
+    const bytes = Uint8Array.from(atob(b64), (char) => char.charCodeAt(0));
+    return [
+      new File([bytes], index === 0 ? "concept.jpg" : "drawing.jpg", {
+        type: mime,
+      }),
+    ];
+  });
+}
+
 export default function ResultStage({
   sessionId,
   initialIdea,
@@ -70,18 +83,21 @@ export default function ResultStage({
   initialIdea: IdeaModel;
   sourceImageDataUrl: string | null;
 }) {
-  const [idea, setIdea] = useState(initialIdea);
+  const idea = initialIdea;
   const [audience, setAudience] = useState<Audience>("teammate");
   const [audienceCopies, setAudienceCopies] = useState<
     Partial<Record<Audience, AudienceCopy>>
   >({
     teammate: {
       oneLiner: initialIdea.oneLiner.value,
-      summary: initialIdea.summary.value,
+      summary: `Hey team - quick idea: ${initialIdea.oneLiner.value} ${initialIdea.summary.value}`,
     },
   });
   const [audienceLoading, setAudienceLoading] = useState(false);
   const [audienceError, setAudienceError] = useState("");
+  const [packageNotice, setPackageNotice] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareError, setShareError] = useState("");
   const [hero, setHero] = useState<VisualAsset>({
     status: "pending",
     imageDataUrl: null,
@@ -92,8 +108,6 @@ export default function ResultStage({
     imageDataUrl: null,
     error: null,
   });
-  const [shareUrl, setShareUrl] = useState("");
-  const [shareError, setShareError] = useState("");
   const visualsStarted = useRef(false);
 
   const activeCopy = useMemo(
@@ -144,13 +158,14 @@ export default function ResultStage({
     visualsStarted.current = true;
     void generateVisual("hero");
     void generateVisual("sketch");
-    // The first generation intentionally uses the confirmed model snapshot.
+    // Generate once from the approved model snapshot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function switchAudience(next: Audience) {
     setAudience(next);
     setAudienceError("");
+    setPackageNotice("");
     if (audienceCopies[next]) return;
     setAudienceLoading(true);
     try {
@@ -170,11 +185,6 @@ export default function ResultStage({
       setAudienceLoading(false);
     }
   }
-
-  const blurb = useMemo(
-    () => `${activeCopy.oneLiner}\n\n${activeCopy.summary}`,
-    [activeCopy],
-  );
 
   async function createShare() {
     setShareError("");
@@ -201,6 +211,7 @@ export default function ResultStage({
         window.location.origin,
       ).toString();
       setShareUrl(absoluteUrl);
+      setPackageNotice("Share link created.");
       return absoluteUrl;
     } catch (err) {
       setShareError(err instanceof Error ? err.message : String(err));
@@ -211,25 +222,38 @@ export default function ResultStage({
   async function copyForChat() {
     const url = shareUrl || (await createShare());
     if (!url) return;
-    await navigator.clipboard.writeText(`${blurb}\n\n${url}`);
+    await navigator.clipboard.writeText(`${activeCopy.summary}\n\n${url}`);
+    setPackageNotice("Message and share link copied.");
   }
 
-  async function shareWithImages() {
-    const files = [hero, sketch]
-      .filter((asset) => asset.imageDataUrl)
-      .map((asset, index) => {
-        const [header, b64] = asset.imageDataUrl!.split(",");
-        const mime = header.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
-        const bytes = Uint8Array.from(atob(b64), (char) => char.charCodeAt(0));
-        return new File([bytes], index === 0 ? "hero.jpg" : "sketch.jpg", {
-          type: mime,
-        });
-      });
-    if (navigator.share && files.length) {
-      await navigator.share({ text: blurb, url: shareUrl, files });
+  async function copyText() {
+    const text =
+      audience === "technical-engineering"
+        ? `Subject: ${activeCopy.oneLiner}\n\n${activeCopy.summary}`
+        : activeCopy.summary;
+    await navigator.clipboard.writeText(text);
+    setPackageNotice(
+      audience === "technical-engineering"
+        ? "Engineering email copied."
+        : "Teammate message copied.",
+    );
+  }
+
+  async function shareTeammatePackage() {
+    const files = imageFiles([hero, sketch]);
+    if (files.length < 2) return;
+    const url = shareUrl || (await createShare());
+    if (!url) return;
+
+    if (
+      navigator.share &&
+      (!navigator.canShare || navigator.canShare({ files }))
+    ) {
+      await navigator.share({ text: activeCopy.summary, url, files });
       return;
     }
-    await copyForChat();
+
+    await navigator.clipboard.writeText(`${activeCopy.summary}\n\n${url}`);
     for (const file of files) {
       const anchor = document.createElement("a");
       anchor.href = URL.createObjectURL(file);
@@ -237,49 +261,62 @@ export default function ResultStage({
       anchor.click();
       URL.revokeObjectURL(anchor.href);
     }
+    setPackageNotice("Message copied and both images downloaded.");
   }
 
   async function deleteShare() {
     if (!shareUrl) return;
     const token = shareUrl.split("/").pop();
+    if (!token) return;
     await fetch(`/api/share/${token}`, { method: "DELETE" });
     setShareUrl("");
+    setPackageNotice("Share link deleted.");
   }
 
+  const visualsReady = hero.status === "ready" && sketch.status === "ready";
+  const visualsSettled =
+    hero.status !== "pending" && sketch.status !== "pending";
+
   return (
-    <main className="mx-auto min-h-svh max-w-6xl px-5 py-8">
+    <main className="mx-auto min-h-svh max-w-6xl px-5 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <FlowStepper active="Result" />
         <button
           onClick={createShare}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+          disabled={!visualsSettled}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-wait disabled:opacity-50"
         >
-          Share
+          {visualsSettled ? "Create share link" : "Preparing share..."}
         </button>
       </div>
 
       <header className="mt-12 max-w-4xl">
-        <input
-          value={idea.title.value}
-          onChange={(event) =>
-            setIdea((current) => ({
-              ...current,
-              title: { ...current.title, value: event.target.value },
-            }))
-          }
-          aria-label="Idea title"
-          className="w-full bg-transparent text-4xl font-bold tracking-tight outline-none sm:text-6xl"
-        />
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
+          Approved results
+        </p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-6xl">
+          {idea.title.value}
+        </h1>
         <p className="mt-4 text-xl leading-relaxed text-stone-300">
-          {audienceLoading ? "Rewriting..." : activeCopy.oneLiner}
+          {idea.oneLiner.value}
         </p>
       </header>
 
-      <section className="mt-8">
-        <p className="mb-2 text-xs font-semibold uppercase text-stone-500">
-          Explain it to
-        </p>
-        <div className="inline-flex rounded-lg border border-stone-700 bg-stone-900 p-1">
+      <section className="mt-8 grid gap-4 md:grid-cols-2">
+        <VisualPanel
+          title="Concept image"
+          asset={hero}
+          onRetry={() => generateVisual("hero")}
+        />
+        <VisualPanel
+          title="Cleaned-up drawing"
+          asset={sketch}
+          onRetry={() => generateVisual("sketch")}
+        />
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-stone-800 bg-stone-900/50 p-5 sm:p-7">
+        <div className="inline-flex rounded-lg border border-stone-700 bg-stone-950 p-1">
           {AUDIENCES.map((option) => (
             <button
               key={option.id}
@@ -294,106 +331,106 @@ export default function ResultStage({
             </button>
           ))}
         </div>
+
+        {audienceLoading ? (
+          <p className="mt-8 text-stone-400">Writing the engineering spec...</p>
+        ) : audience === "teammate" ? (
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold text-stone-200">
+              Informal text message
+            </h2>
+            <p className="mt-3 max-w-3xl whitespace-pre-wrap text-lg leading-relaxed text-stone-300">
+              {activeCopy.summary}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={copyText}
+                className="rounded-lg border border-stone-600 px-4 py-2.5 text-sm font-semibold hover:bg-stone-800"
+              >
+                Copy message
+              </button>
+              <button
+                onClick={shareTeammatePackage}
+                disabled={!visualsReady}
+                className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40"
+              >
+                {visualsReady
+                  ? "Share message + 2 images"
+                  : "Waiting for both images..."}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold text-stone-200">
+              Full engineering spec email
+            </h2>
+            <p className="mt-4 rounded-lg border border-stone-700 bg-stone-950 px-4 py-3 text-sm text-stone-300">
+              <span className="font-semibold text-stone-100">Subject:</span>{" "}
+              {activeCopy.oneLiner}
+            </p>
+            <pre className="mt-3 whitespace-pre-wrap rounded-lg border border-stone-700 bg-stone-950 p-5 font-sans text-sm leading-7 text-stone-300">
+              {activeCopy.summary}
+            </pre>
+            <button
+              onClick={copyText}
+              className="mt-5 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
+            >
+              Copy email
+            </button>
+          </div>
+        )}
+
         {audienceError && (
-          <p className="mt-2 text-sm text-rose-300">{audienceError}</p>
+          <p className="mt-4 text-sm text-rose-300">{audienceError}</p>
+        )}
+        {packageNotice && (
+          <p className="mt-4 text-sm text-emerald-300">{packageNotice}</p>
+        )}
+        {shareError && (
+          <p className="mt-4 text-sm text-rose-300">{shareError}</p>
         )}
       </section>
 
-      <section className="mt-10 grid gap-4 md:grid-cols-2">
-        <VisualPanel
-          title="Hero concept"
-          asset={hero}
-          onRetry={() => generateVisual("hero")}
-        />
-        <VisualPanel
-          title="Your air-drawing, cleaned up"
-          asset={sketch}
-          onRetry={() => generateVisual("sketch")}
-        />
-      </section>
-
-      <section className="mt-10 border-t border-stone-800 pt-8">
-        <h2 className="mb-3 text-sm font-semibold text-stone-200">Summary</h2>
-        <p className="max-w-4xl text-lg leading-relaxed text-stone-400">
-          {audienceLoading ? "Rewriting..." : activeCopy.summary}
-        </p>
-      </section>
-
-      <section className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-2">
+      <section className="mt-8 grid gap-4 md:grid-cols-2">
         {RESULT_FIELDS.map(([key, label]) => (
-          <label key={key}>
-            <span className="mb-2 block text-sm font-semibold text-stone-200">
-              {label}
-            </span>
-            <textarea
-              value={idea[key].value}
-              onChange={(event) =>
-                setIdea((current) => ({
-                  ...current,
-                  [key]: { ...current[key], value: event.target.value },
-                }))
-              }
-              rows={4}
-              className="w-full resize-y border-0 border-l-2 border-stone-700 bg-transparent px-4 py-1 text-sm leading-relaxed text-stone-400 outline-none focus:border-emerald-500"
-            />
-          </label>
+          <article
+            key={key}
+            className="rounded-xl border border-stone-800 bg-stone-900/40 p-5"
+          >
+            <h2 className="text-sm font-semibold text-stone-200">{label}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-400">
+              {idea[key].value}
+            </p>
+          </article>
         ))}
       </section>
 
-      <section className="mt-10 border-t border-stone-800 pt-8">
-        <h2 className="mb-3 text-sm font-semibold text-amber-300">
-          Open decisions
-        </h2>
-        {idea.openDecisions.length ? (
-          <ul className="list-disc space-y-2 pl-5 text-stone-400">
-            {idea.openDecisions.map((decision) => (
-              <li key={decision}>{decision}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-stone-500">No unresolved decisions.</p>
-        )}
-      </section>
-
-      {(shareUrl || shareError) && (
+      {shareUrl && (
         <section className="fixed inset-x-4 bottom-4 z-20 mx-auto max-w-xl rounded-xl border border-stone-700 bg-stone-900 p-5 shadow-2xl">
-          {shareError ? (
-            <p className="text-sm text-rose-300">{shareError}</p>
-          ) : (
-            <>
-              <p className="text-sm font-semibold">
-                Temporary share link ready
-              </p>
-              <a
-                href={shareUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 block truncate text-sm text-cyan-300 underline"
-              >
-                {shareUrl}
-              </a>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  onClick={copyForChat}
-                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold"
-                >
-                  Copy for chat
-                </button>
-                <button
-                  onClick={shareWithImages}
-                  className="rounded-lg border border-stone-600 px-3 py-2 text-sm"
-                >
-                  Share with images
-                </button>
-                <button
-                  onClick={deleteShare}
-                  className="rounded-lg border border-rose-900 px-3 py-2 text-sm text-rose-300"
-                >
-                  Delete now
-                </button>
-              </div>
-            </>
-          )}
+          <p className="text-sm font-semibold">Temporary share link ready</p>
+          <a
+            href={shareUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 block truncate text-sm text-cyan-300 underline"
+          >
+            {shareUrl}
+          </a>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={copyForChat}
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold"
+            >
+              Copy for chat
+            </button>
+            <button
+              onClick={deleteShare}
+              className="rounded-lg border border-rose-900 px-3 py-2 text-sm text-rose-300"
+            >
+              Delete now
+            </button>
+          </div>
         </section>
       )}
     </main>

@@ -9,8 +9,8 @@
 > You sketch, say, a truck — then move your arm like it's the truck's ladder — and the app
 > actually _understands_ what you're showing it.
 >
-> Then it asks you a couple of smart questions, and spits out a clean, shareable page that
-> explains your idea to anyone: a teammate, an investor, even a coding AI.
+> Then it asks you a couple of smart questions, and spits out a clean, shareable page with a
+> teammate-ready message, a technical engineering brief, and two visuals.
 >
 > Think: **"draw your idea with your hands, and it turns into something other people get."**
 > That's the whole thing. The hand-drawing-in-the-air part is the wow moment. 🪄
@@ -73,9 +73,9 @@ few relevant lines, with the important code already highlighted and zoomed in.
 
 **3:35–4:30 — The payoff: the result page.**
 Show the generated page: title, summary, the **hero image**, and the **reconstructed clean
-sketch** (point out: _"that's my air-drawing, cleaned up"_). Click the **"Explain it to…"**
-switcher — flip from **teammate** to **coding agent** to **investor** and show the wording
-change.
+sketch** (point out: _"that's my air-drawing, cleaned up"_). Click the package switcher — flip
+from **Teammates** to **Technical engineering** and show the output change from a text message
+to a detailed implementation email.
 
 **4:30–5:00 — Share + close.**
 Click **share**, open the live `/share` link **on your phone** to prove it's real and

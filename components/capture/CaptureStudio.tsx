@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import AirDraw from "@/components/airdraw/AirDraw";
 import ConfirmStage from "@/components/flow/ConfirmStage";
+import FlowStepper from "@/components/flow/FlowStepper";
 import GrillStage from "@/components/flow/GrillStage";
 import ResultStage from "@/components/flow/ResultStage";
 import {
@@ -19,11 +20,7 @@ type SubtitleOverlayProps = {
   segments: TranscriptSegment[];
 };
 
-function SubtitleOverlay({
-  status,
-  error,
-  segments,
-}: SubtitleOverlayProps) {
+function SubtitleOverlay({ status, error, segments }: SubtitleOverlayProps) {
   const live = status === "live";
   const visible = segments
     .filter((segment) => segment.text.trim().length > 0)
@@ -207,6 +204,8 @@ export default function CaptureStudio() {
 
   return (
     <main className="mx-auto flex min-h-svh max-w-7xl flex-col gap-4 px-4 py-4">
+      <FlowStepper active="Capture" />
+
       <section className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-950">
         <AirDraw
           onKeyframe={onKeyframe}

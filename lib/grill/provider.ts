@@ -17,13 +17,18 @@ import { ideaModelSchema } from "@/lib/synthesis/schema";
 
 const FALLBACK_QUESTIONS: Record<FoundationalField, string> = {
   title: "What name best captures this idea without needing extra explanation?",
-  oneLiner: "How would you explain the idea to a teammate in one concrete sentence?",
-  summary: "What is the most important detail someone would miss from the current summary?",
+  oneLiner:
+    "How would you explain the idea to a teammate in one concrete sentence?",
+  summary:
+    "What is the most important detail someone would miss from the current summary?",
   problem: "What painful problem happens today, and how often does it happen?",
-  targetUser: "Who feels this problem most strongly, in what specific situation?",
+  targetUser:
+    "Who feels this problem most strongly, in what specific situation?",
   solution: "What does the product actually do that resolves the problem?",
-  coreWorkflow: "Walk me through the exact steps from starting the product to getting the result.",
-  differentiator: "Why would someone use this instead of the closest existing alternative?",
+  coreWorkflow:
+    "Walk me through the exact steps from starting the product to getting the result.",
+  differentiator:
+    "Why would someone use this instead of the closest existing alternative?",
   desiredOutcome: "What observable result tells the user this worked?",
 };
 
@@ -113,7 +118,7 @@ export async function runGrillTurn(
               "Never ask for something already established. Reference evidence when useful.",
               "The keyframes are hand-drawn evidence from the creator. Inspect them directly and infer ordinary shapes/relationships when visible.",
               "If the visual evidence is ambiguous, ask the creator to draw a specific part again. In that case set nextQuestion.mode='redraw' and include a concrete redrawPrompt.",
-              "Treat 'I don't know yet' and 'Skip' as a signal to make the best-supported assumption later, not as a permanent open decision.",
+              "Treat 'I don't know yet' as a signal to make the best-supported assumption later, not as a permanent open decision.",
               "Treat 'That assumption is wrong' as a correction: remove or rewrite the assumption and lower unsupported confidence.",
               "When done=true, clear openDecisions by converting remaining ambiguity into explicit assumptions.",
               "Do not output meta open decisions about what the keyframes do or do not prove.",

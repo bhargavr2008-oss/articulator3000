@@ -3,9 +3,8 @@ import { NextResponse } from "next/server";
 /**
  * POST /api/sessions — create a temporary session.
  *
- * Step 1 stub: returns an id + timestamps with no persistence yet. Wiring this
- * to Vercel Postgres lands with the synthesize/grill steps that actually need
- * to read session state back.
+ * The hackathon flow keeps active session state in the client and posts each
+ * model snapshot forward. Frozen public shares are persisted separately.
  */
 export async function POST() {
   const id = crypto.randomUUID();

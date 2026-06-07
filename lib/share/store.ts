@@ -1,5 +1,5 @@
 import { del, get, put } from "@vercel/blob";
-import type { ShareSnapshot } from "./schema";
+import { shareSnapshotSchema, type ShareSnapshot } from "./schema";
 
 const STORE_KEY = "__articulator_share_store__";
 
@@ -27,11 +27,16 @@ export function createShare(snapshot: Omit<ShareSnapshot, "createdAt">) {
 
 export async function readShare(token: string) {
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const result = await get(`shares/${token}.json`, { access: "public" });
-    if (!result || result.statusCode !== 200) return null;
-    return JSON.parse(
-      await new Response(result.stream).text(),
-    ) as ShareSnapshot;
+    try {
+      const result = await get(`shares/${token}.json`, { access: "public" });
+      if (!result || result.statusCode !== 200) return null;
+      const parsed = shareSnapshotSchema.safeParse(
+        JSON.parse(await new Response(result.stream).text()),
+      );
+      return parsed.success ? parsed.data : null;
+    } catch {
+      return null;
+    }
   }
   return store().get(token) ?? null;
 }

@@ -69,7 +69,7 @@ desiredOutcome` + `openDecisions[]`, `assumptions[]`, `evidence[]`.
 - References evidence directly: _"When you pointed at the top of the truck, did you mean the
   ladder pivot?"_
 - Never asks for what evidence already established.
-- Offers: "Why are you asking?", "I don't know yet", "Skip", "That assumption is wrong".
+- Offers: "Why are you asking?", "I don't know yet", "That assumption is wrong".
 - Fields still below threshold at stop → surfaced as **open decisions** (a feature, not a
   failure).
 - Always ends with the **"Here's what I understand"** confirmation screen; creator confirms or
@@ -85,13 +85,16 @@ desiredOutcome` + `openDecisions[]`, `assumptions[]`, `evidence[]`.
     air-draw differentiator).
   - Each has independent status + per-artifact retry. Page renders the text **immediately**;
     images **pop into placeholders** when ready.
-- **"Explain it to…" switcher:** 3 audiences — **teammate, investor, coding-agent/Claude Code
-  handoff** — generated **on-demand per click**, rephrasing one-liner + summary only.
-- Users can edit any text section.
+- **"Package it for…" switcher:** 2 audiences — **teammates** and **technical engineering** —
+  generated **on-demand per click**. Teammates get a concise group-chat message; technical
+  engineering gets a fuller plain-text email/spec with requirements, constraints, acceptance
+  criteria, assumptions, and open questions.
+- Users can edit text sections before confirmation.
 
 > **Cut:** all diagrams (user-flow/system), 3-step storyboard, FAQ, objections, before/after,
-> analogy, 60s pitch audio, demo script, presentation outline, one-pager-as-format, full
-> implementation-handoff doc, all exports (PDF/JSON/image-bundle).
+> analogy, 60s pitch audio, demo script, presentation outline, one-pager-as-format,
+> PDF/JSON exports, and the three-audience matrix. The engineering email is the only handoff
+> artifact.
 
 ## 6. Sharing
 
@@ -110,7 +113,7 @@ reliably put text + multiple images on the clipboard and have them paste across 
 
 - **Share-card image:** at generate/share time, composite the **hero image + reconstructed
   sketch + title** into a **single graphic**. This is set as the page's `og:image`.
-- **"Copy for chat"** copies a **2–3 sentence blurb + the share link**. When pasted, the chat
+- **"Copy for chat"** copies a **2–4 sentence blurb + the share link**. When pasted, the chat
   app **auto-unfurls** the link into a rich card showing the share-card image (both visuals) +
   title + summary. One click, one paste, images appear — everywhere unfurling works.
 - **"Share with images"** (mobile): Web Share API attaches the actual image files + text to the
@@ -121,15 +124,16 @@ reliably put text + multiple images on the clipboard and have them paste across 
 ## 7. Architecture
 
 - **Next.js App Router** (TypeScript, React, Tailwind, Zod), **replacing the Vite starter**.
-- **Vercel Postgres** (sessions + share records) + **Vercel Blob** (evidence + generated
-  assets). Deploy on Vercel.
+- Active capture/session state is posted forward through typed route payloads. Frozen share
+  snapshots persist to **Vercel Blob** when configured, with an in-memory fallback for local
+  development.
 - **Server-only OpenAI access** — keys never in browser code.
-- Client **reducer-based session state machine**:
+- A tested client session reducer records the phase contract:
   `setup → capturing → synthesizing → grilling → confirming → generating → complete | error`.
 - A configurable **low-latency vision-capable Responses API model** with **Structured Outputs**
   for synthesis, grilling, and artifacts. **GPT Image** for the hero image. Browser speech
   synthesis reads questions aloud (text-only fallback).
-- **Validate every AI response against Zod; retry once on malformed output.**
+- **Validate structured AI responses against Zod; retry synthesis once on malformed output.**
 
 ### API routes
 
@@ -140,9 +144,9 @@ reliably put text + multiple images on the clipboard and have them paste across 
 | `POST /api/sessions/:id/synthesize` | produce/update the canonical IdeaModel                         |
 | `POST /api/sessions/:id/grill`      | accept latest answer; return updated model + one next question |
 | `POST /api/sessions/:id/confirm`    | lock the creator-approved interpretation                       |
-| `POST /api/sessions/:id/generate`   | stream artifact status + results (text first, images async)    |
+| `POST /api/sessions/:id/generate`   | acknowledge confirmed idea and initialize pending artifacts    |
 | `POST /api/sessions/:id/share`      | create the share token + frozen snapshot                       |
-| `DELETE /api/sessions/:id`          | delete session data + assets                                   |
+| `DELETE /api/sessions/:id`          | acknowledge temporary session deletion                         |
 
 ### Core types
 

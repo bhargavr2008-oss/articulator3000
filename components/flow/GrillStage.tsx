@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AirDraw from "@/components/airdraw/AirDraw";
+import FlowStepper from "@/components/flow/FlowStepper";
 import type { GrillQuestion, GrillTurnResult } from "@/lib/grill/schema";
 import type { IdeaModel, KeyframeInput } from "@/lib/synthesis/schema";
 
@@ -112,6 +113,10 @@ export default function GrillStage({
 
   return (
     <main className="mx-auto min-h-svh max-w-7xl px-4 py-4">
+      <div className="mb-4">
+        <FlowStepper active="Grill" />
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)] lg:items-start">
         <section className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-950">
           <AirDraw

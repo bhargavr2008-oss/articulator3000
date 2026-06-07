@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import FlowStepper from "@/components/flow/FlowStepper";
 import type { IdeaModel } from "@/lib/synthesis/schema";
 
 const FIELDS = [
@@ -28,11 +29,15 @@ export default function ConfirmStage({
 
   return (
     <main className="mx-auto min-h-svh max-w-5xl px-5 py-10">
-      <header className="mb-8">
+      <FlowStepper active="Confirm" />
+
+      <header className="mb-8 mt-8">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
           Grill complete
         </p>
-        <h1 className="text-4xl font-bold tracking-tight">Review the summary</h1>
+        <h1 className="text-4xl font-bold tracking-tight">
+          Review the summary
+        </h1>
         <p className="mt-3 text-stone-400">
           Correct anything that is off, then approve it.
         </p>

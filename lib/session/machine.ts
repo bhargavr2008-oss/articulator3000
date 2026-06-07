@@ -1,5 +1,5 @@
 /**
- * Client-side session state machine (Step 1 skeleton).
+ * Client-side session state machine.
  *
  * Phases follow the locked flow in SPEC.md §7:
  *   setup → capturing → synthesizing → grilling → confirming → generating → complete
