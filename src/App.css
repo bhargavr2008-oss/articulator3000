@@ -1,0 +1,53 @@
+main {
+  width: min(720px, calc(100% - 40px));
+  margin: auto;
+  padding: 72px 0;
+}
+
+.eyebrow {
+  margin: 0 0 24px;
+  color: #fdba74;
+  font:
+    700 0.75rem/1.2 ui-monospace,
+    monospace;
+  letter-spacing: 0.18em;
+}
+
+.intro {
+  max-width: 620px;
+  margin: 24px 0 48px;
+  color: #a8a29e;
+  font-size: clamp(1.1rem, 3vw, 1.35rem);
+  line-height: 1.6;
+}
+
+section {
+  padding: 28px;
+  border: 1px solid #292524;
+  border-radius: 16px;
+  background: #1c1917;
+}
+
+ol {
+  margin: 18px 0 0;
+  padding-left: 1.5rem;
+  color: #d6d3d1;
+  line-height: 2;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  color: #a8a29e;
+  font-size: 0.9rem;
+}
+
+.status span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 12px #4ade80;
+}
