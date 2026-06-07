@@ -1,6 +1,7 @@
-# IndyHax 2026
+# The Articulator 3000
 
-Idea-agnostic hackathon starter built with React, TypeScript, and Vite.
+Turn a rough idea expressed through voice, typing, and air-drawing into a clear, shareable
+concept page.
 
 ## Start
 
@@ -10,7 +11,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Then open the local URL printed by Vite.
+Then open the local URL printed by Next.js.
 
 ## Commands
 
@@ -19,12 +20,12 @@ Then open the local URL printed by Vite.
 - `npm run check` - lint, test, build, and verify formatting
 - `npm run format` - format the codebase
 
-## When the idea arrives
+## Project docs
 
-1. Fill out [IDEA.md](./IDEA.md).
-2. Put UI and feature code in `src/`.
-3. Add public static files to `public/`.
-4. Add browser-safe configuration as `VITE_*` values in `.env.local`.
-5. Pick backend and deployment services only when the idea requires them.
+- [CONTEXT.md](./CONTEXT.md) explains the hackathon goals and scope.
+- [SPEC.md](./SPEC.md) is the locked product specification.
+- [PLAN.md](./PLAN.md) defines the risk-first implementation order.
+- [TEAM_BRIEF.md](./TEAM_BRIEF.md) contains the demo and pitch guidance.
 
-Do not put secrets in `VITE_*` variables; Vite exposes them to the browser.
+Keep `OPENAI_API_KEY` server-only. Do not put secrets in `NEXT_PUBLIC_*`
+variables because Next.js exposes them to the browser.

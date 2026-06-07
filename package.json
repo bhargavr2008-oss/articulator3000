@@ -1,25 +1,32 @@
 {
-  "name": "indyhax-2026",
+  "name": "the-articulator-3000",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run test && npm run build && npm run format:check"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run format:check"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.35",
+    "@vercel/blob": "^2.4.0",
+    "next": "^16.2.7",
+    "openai": "^6.42.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.12.3",
@@ -31,7 +38,9 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "postcss": "^8.5.15",
     "prettier": "^3.8.3",
+    "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
